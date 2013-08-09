@@ -25,56 +25,83 @@
 
 /*jslint sloppy:true node:true */
 
-var fs, cssbeautify, fname, content, options, style;
+var fs, cssbeautify, fname, content, options, style, argv, package;
 
 fs = require('fs');
 cssbeautify = require('cssbeautify');
+optimist = require('optimist');
+package = require('../package');
+argv = optimist
+        .alias('h', 'help')
+        .describe('h', 'show this help message')
+        .options('i', {
+            alias: 'indent',
+            'default': '    '
+        })
+        .string('indent')
+        .describe('i', 'string used for the indentation of the declaration (spaces, tabs or number of spaces)')
+        .options('o', {
+            alias: 'openbrace',
+            'default': 'end-of-line'
+        })
+        .describe('o', 'the placement of open curly brace, either end-of-line or separate-line')
+        .string('o')
+        .options('a', {
+            alias: 'autosemicolon',
+            'default': false
+        })
+        .boolean('autosemicolon')
+        .describe('a', 'insert a semicolon after the last ruleset')
+        .usage('Usage:\n\t$0 [options] filename')
+        .alias('v', 'version')
+        .describe('v', 'Display program version')
+        .argv;
 
-function showUsage() {
-    console.log('Usage:');
-    console.log('   cssbeautify [options] style.css');
-    console.log();
-    console.log('Available options:');
-    console.log();
-    console.log('  -v, --version  Shows program version');
-    console.log();
-    process.exit(1);
+if (argv.h) {
+    optimist.showHelp();
+    process.exit(0);
 }
 
-if (process.argv.length <= 2) {
-    showUsage();
+if (argv.v) {
+    console.log(package.name + ' version ' + package.version);
+    process.exit(0);
 }
 
-options = {};
-
-process.argv.splice(2).forEach(function (entry) {
-
-    if (entry === '-h' || entry === '--help') {
-        showUsage();
-    } else if (entry === '-v' || entry === '--version') {
-        // Keep in sync with package.json
-        console.log('CSS Beautify version 0.3.0');
-        console.log();
-        process.exit(0);
-    } else if (entry.slice(0, 2) === '--') {
-        console.log('Error: unknown option ' + entry + '.');
-        process.exit(1);
-    } else if (typeof fname === 'string') {
-        console.log('Error: more than one input file.');
-        process.exit(1);
-    } else {
-        fname = entry;
-    }
-});
-
-if (typeof fname !== 'string') {
+if (! argv._.length) {
     console.log('Error: no input file.');
+    console.log();
+    optimist.showHelp();
     process.exit(1);
 }
+
+fname = argv._[0];
+
+if (! (/^(\s*)$/).test(argv.indent)) {
+    var indent = parseInt(argv.indent, 10);
+    if (indent === (indent|0)) {
+        for (var length = indent, indent = ''; indent.length < length; indent +=' ');
+        argv.indent = argv.i = indent;
+    } else {
+        console.log('Error: invalid indent value, only spaces,tabs or number of spaces are allowed');
+        process.exit(1);
+    }
+}
+
+if ((['end-of-line', 'separate-line']).indexOf(argv.openbrace) === -1) {
+    console.log('Error: invalid openbrace value, use either "end-of-line" or "separate-line"');
+    process.exit(1);
+}
+
+
+options = {
+    indent: argv.indent,
+    openbrace: argv.openbrace,
+    autosemicolon: Boolean(argv.autosemicolon)
+};
 
 try {
     content = fs.readFileSync(fname, 'utf-8');
-    style = cssbeautify(content);
+    style = cssbeautify(content, options);
     console.log(style);
 } catch (e) {
     console.log('Error: ' + e.message);

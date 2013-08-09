@@ -25,6 +25,20 @@ command-line use, install Node.js [cssbeautify](https://npmjs.org/package/cssbea
 
 For more examples, see also its [test suite](http://cssbeautify.com/test/).
 
+## Using CLI ##
+
+    `cssbeautify [options] filename`
+
+Options:
+```
+  -h, --help           show this help message
+  -i, --indent         string used for the indentation of the declaration (spaces, tabs or number of spaces)  [default: "    "]
+  -o, --openbrace      the placement of open curly brace, either end-of-line or separate-line                 [default: "end-of-line"]
+  -a, --autosemicolon  insert a semicolon after the last ruleset                                              [default: false]
+  -v, --version        Display program version
+```
+
+
 ## Using cssbeautify() function ##
 
 Since CSS Beautify is written in pure JavaScript, it can run anywhere that JavaScript can run.
